@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script>(function(){try{if(localStorage.getItem("ns_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Netsimon — Extras</title>
+<link rel="icon" type="image/png" href="/img/favicon-32.png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/painel.css?v=19">
+<style>
+.xl-row { display:flex; gap:10px; align-items:stretch; }
+.xl-row input { flex:1; min-width:0; }
+.xl-verdict { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:10px; font-size:13px; }
+#xl-output { white-space:pre-wrap; word-break:break-word; height:auto; max-height:520px; }
+.xl-hist-title { font-size:12px; font-weight:600; color:var(--muted); margin:4px 0 10px; }
+.xl-hist-item { display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:8px;
+  border:1px solid var(--border); border-radius:8px; background:var(--surface2); }
+.xl-hist-item .badge { flex-shrink:0; min-width:64px; text-align:center; }
+.xl-hist-link { flex:1; min-width:0; cursor:pointer; overflow-wrap:anywhere;
+  font-family:'JetBrains Mono', monospace; font-size:12.5px; }
+.xl-hist-link:hover { color:var(--accent); }
+.xl-hist-meta { font-family:inherit; font-size:11px; color:var(--muted); margin-top:2px; }
+@media (max-width:560px) { .xl-row { flex-direction:column; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="/dashboard.html" class="sidebar-logo" title="Início">
+      <div class="logo-icon"><img src="/img/logo.png" alt="Painel Netsimon"></div>
+    </a>
+
+    <nav class="sidebar-nav">
+      <a href="/dashboard.html" class="nav-item active" data-page="dashboard">
+        <span class="nav-icon nav-icon-img"><img src="/img/icon-home.png" alt="Início"></span><span>Início</span>
+      </a>
+      <a href="/usuarios.html" class="nav-item" data-page="usuarios">
+        <span class="nav-icon">👤</span><span>Usuários</span>
+      </a>
+      <a href="/todos-usuarios.html" class="nav-item" data-page="todos-usuarios">
+        <span class="nav-icon">👥</span><span>Todos os Usuários</span>
+      </a>
+      <a href="/revendedores.html" class="nav-item reseller-manage-only" data-page="revendedores">
+        <span class="nav-icon">🏪</span><span>Revendedores</span>
+      </a>
+      <a href="/dispositivos.html" class="nav-item" data-page="dispositivos">
+        <span class="nav-icon">📵</span><span>Dispositivos</span>
+      </a>
+      <a href="/ia.html" class="nav-item" data-page="ia">
+        <span class="nav-icon">✨</span><span>IA</span>
+      </a>
+      <a href="/whatsapp.html" class="nav-item" data-page="whatsapp">
+        <span class="nav-icon nav-icon-img"><img src="/img/icon-whatsapp.png" alt="Bot WhatsApp"></span><span>Bot WhatsApp</span>
+      </a>
+      <a href="/xray.html" class="nav-item admin-only" data-page="xray">
+        <span class="nav-icon nav-icon-img"><img src="/img/icon-xray.png" alt="Xray"></span><span>Xray</span>
+      </a>
+      <a href="/servidores.html" class="nav-item admin-only" data-page="servidores">
+        <span class="nav-icon">🖧</span><span>Servidores</span>
+      </a>
+      <a href="/diagnostico.html" class="nav-item" data-page="diagnostico">
+        <span class="nav-icon">🛠️</span><span>Manutenção</span>
+      </a>
+      <a href="/campanhas.html" class="nav-item" data-page="campanhas">
+        <span class="nav-icon">📣</span><span>Campanhas</span>
+      </a>
+      <a href="/app.html" class="nav-item" data-page="app">
+        <span class="nav-icon">📱</span><span>Aplicativo</span>
+      </a>
+      <a href="/backup.html" class="nav-item admin-only" data-page="backup">
+        <span class="nav-icon">💾</span><span>Backup</span>
+      </a>
+      <a href="/bot.html" class="nav-item admin-only" data-page="bot">
+        <span class="nav-icon">🤖</span><span>Bot Telegram</span>
+      </a>
+      <a href="/logs.html" class="nav-item admin-only" data-page="logs">
+        <span class="nav-icon">📋</span><span>Logs</span>
+      </a>
+      <a href="#" class="nav-item admin-only" data-page="terminal" onclick="openTerminal(); return false;">
+        <span class="nav-icon">🖥️</span><span>Terminal</span>
+      </a>
+      <!-- Item 4: menu novo, exclusivo do admin (não é recurso por revendedor). -->
+      <a href="/material.html" class="nav-item admin-only" data-page="material">
+        <span class="nav-icon">🗃️</span><span>Material</span>
+      </a>
+      <a href="/configuracoes.html" class="nav-item admin-only" data-page="config">
+        <span class="nav-icon">⚙️</span><span>Configurações</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <span class="user-avatar">👑</span>
+        <div>
+          <div class="user-name" id="sidebar-username">–</div>
+          <div class="user-role" id="sidebar-role">–</div>
+        </div>
+      </div>
+      <button class="btn-theme-toggle" id="btn-theme-toggle" title="Alternar tema" onclick="toggleTheme()">☀️</button>
+      <button class="btn-logout" id="btn-logout" title="Sair">⏻</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="burger" id="burger">☰</button>
+        <h1 class="page-title">Extras</h1>
+      </div>
+      <div class="topbar-right"></div>
+    </header>
+
+    <div class="content">
+      <div class="card-panel" data-panel-id="extras-link">
+        <div class="card-panel-header"><span>🔗 Consultar link</span></div>
+
+        <div style="padding:18px" class="form-grid">
+          <div class="text-sm text-muted">
+            Digite o link (ex.: <span class="text-mono">d2abc123.cloudfront.net</span>) e clique em Consultar.
+            O teste roda aqui no servidor e explica em português se o link está ativo e, se não estiver, onde consertar.
+          </div>
+          <div class="xl-row">
+            <input type="text" id="xl-link" placeholder="link, domínio ou IP" autocomplete="off" spellcheck="false">
+            <button class="btn btn-primary" id="xl-btn" onclick="xlConsultar()">Consultar</button>
+          </div>
+
+          <div id="xl-result" style="display:none">
+            <div class="xl-verdict" id="xl-verdict"></div>
+            <div class="log-viewer" id="xl-output"></div>
+          </div>
+        </div>
+
+        <div style="padding:0 18px 18px">
+          <div class="xl-hist-title">Histórico de links consultados</div>
+          <div id="xl-history"><div class="text-muted text-sm">Carregando…</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/js/painel.js?v=53"></script>
+<script>
+const xlEl  = id => document.getElementById(id);
+const xlEsc = s => String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const XL_VERD = {
+  ok:      { cls: "badge-success", icon: "✔", txt: "Link ativo" },
+  atencao: { cls: "badge-warn",    icon: "⚠", txt: "Verificar" },
+  falha:   { cls: "badge-danger",  icon: "✘", txt: "Com problema" },
+};
+let xlHist = [];
+let xlShownId = null;
+
+function xlData(ts) {            // "2026-10-01 17:15:09" -> "01/10 17:15"
+  return ts && ts.length >= 16 ? ts.slice(8,10) + "/" + ts.slice(5,7) + " " + ts.slice(11,16) : (ts || "");
+}
+
+function xlLinhas(texto) {       // reaproveita as cores do visualizador de logs
+  return String(texto || "").split("\n").map(l => {
+    const t = l.trim();
+    const c = t.startsWith("✔") ? "ok" : t.startsWith("⚠") ? "warn" : t.startsWith("✘") ? "err" : "";
+    return `<div class="log-line ${c}">${xlEsc(l) || "&nbsp;"}</div>`;
+  }).join("");
+}
+
+function xlMostrar(e) {
+  const v = XL_VERD[e.veredito] || XL_VERD.falha;
+  xlShownId = e.id;
+  xlEl("xl-result").style.display = "";
+  xlEl("xl-verdict").innerHTML =
+    `<span class="badge ${v.cls}">${v.icon} ${v.txt}</span>` +
+    `<strong>${xlEsc(e.link)}</strong>` +
+    `<span class="text-muted text-sm">${xlEsc(xlData(e.ts))}</span>`;
+  xlEl("xl-output").innerHTML = xlLinhas(e.saida);
+}
+
+async function xlConsultar() {
+  const input = xlEl("xl-link");
+  const link = input.value.trim();
+  if (!link) { toast("Digite o link que deseja consultar", true); input.focus(); return; }
+
+  const btn = xlEl("xl-btn");
+  btn.disabled = true; btn.textContent = "Consultando…";
+  xlShownId = null;
+  xlEl("xl-result").style.display = "";
+  xlEl("xl-verdict").innerHTML = '<span class="text-muted">Rodando os testes no servidor (pode levar até 1 minuto)…</span>';
+  xlEl("xl-output").innerHTML = "";
+
+  const r = await api("/extras/link/check", "POST", { link });
+  btn.disabled = false; btn.textContent = "Consultar";
+  if (!r || !r.entry) { xlEl("xl-result").style.display = "none"; return; }  // api() já avisou o erro
+  xlMostrar(r.entry);
+  xlCarregar();
+}
+
+async function xlCarregar() {
+  const r = await api("/extras/link/history");
+  if (!r) return;
+  xlHist = r.items || [];
+  const box = xlEl("xl-history");
+  if (!xlHist.length) {
+    box.innerHTML = '<div class="text-muted text-sm">Nenhum link consultado ainda. Digite um link acima e clique em Consultar.</div>';
+    return;
+  }
+  box.innerHTML = xlHist.map(it => {
+    const v = XL_VERD[it.veredito] || XL_VERD.falha;
+    return `<div class="xl-hist-item">
+      <span class="badge ${v.cls}">${v.icon} ${xlEsc(it.codigo || "?")}</span>
+      <div class="xl-hist-link" data-id="${xlEsc(it.id)}" title="Ver o último resultado deste link">
+        ${xlEsc(it.link)}
+        <div class="xl-hist-meta">${xlEsc(v.txt)} em ${xlEsc(xlData(it.ts))}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" data-del="${xlEsc(it.id)}" title="Excluir do histórico">🗑</button>
+    </div>`;
+  }).join("");
+}
+
+xlEl("xl-history").addEventListener("click", async ev => {
+  const del = ev.target.closest("[data-del]");
+  if (del) {
+    const id = del.dataset.del;
+    const r = await api("/extras/link/history/" + encodeURIComponent(id), "DELETE");
+    if (!r) return;
+    if (xlShownId === id) { xlShownId = null; xlEl("xl-result").style.display = "none"; }
+    toast("Link removido do histórico");
+    xlCarregar();
+    return;
+  }
+  const lk = ev.target.closest("[data-id]");
+  if (lk) {
+    const it = xlHist.find(x => x.id === lk.dataset.id);
+    if (it) { xlEl("xl-link").value = it.link; xlMostrar(it); }
+  }
+});
+
+xlEl("xl-link").addEventListener("keydown", ev => { if (ev.key === "Enter") xlConsultar(); });
+
+initPage();
+xlCarregar();
+</script>
+</body>
+</html>
