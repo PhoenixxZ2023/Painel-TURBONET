@@ -1,0 +1,14 @@
+[Unit]
+Description=Painel Netsimon - Watchdog do WSS (health check real: TLS + 101)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /etc/painel/wss_watchdog.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/netsimon_wss_watchdog.log
+StandardError=append:/var/log/netsimon_wss_watchdog.log
+
+[Install]
+WantedBy=multi-user.target

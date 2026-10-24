@@ -1,0 +1,28 @@
+{
+  "listen": [
+    {
+      "host": "0.0.0.0",
+      "port": 80,
+      "tls": false
+    }
+  ],
+  "tls": {
+    "cert_file": "/etc/netsimon-bhttp/tls/fullchain.pem",
+    "key_file": "/etc/netsimon-bhttp/tls/privkey.pem"
+  },
+  "backend": {
+    "host": "127.0.0.1",
+    "port": 22
+  },
+  "session": {
+    "idle_timeout_seconds": 300,
+    "max_buffered_chunks": 4096,
+    "download_wait_ms": 8000,
+    "retain_chunks": 256,
+    "keepalive_idle_seconds": 0,
+    "slot_credit": true
+  },
+  "log": {
+    "level": "info"
+  }
+}
