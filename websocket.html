@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script>(function(){try{if(localStorage.getItem("ns_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Netsimon — WebSocket</title>
+<link rel="icon" type="image/png" href="/img/favicon-32.png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/painel.css?v=19">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="/dashboard.html" class="sidebar-logo" title="Início">
+      <div class="logo-icon"><img src="/img/logo.png" alt="Painel Netsimon"></div>
+    </a>
+
+    <nav class="sidebar-nav">
+      <a href="/dashboard.html" class="nav-item active" data-page="dashboard">
+        <span class="nav-icon nav-icon-img"><img src="/img/icon-home.png" alt="Início"></span><span>Início</span>
+      </a>
+      <a href="/usuarios.html" class="nav-item" data-page="usuarios">
+        <span class="nav-icon">👤</span><span>Usuários</span>
+      </a>
+      <a href="/todos-usuarios.html" class="nav-item" data-page="todos-usuarios">
+        <span class="nav-icon">👥</span><span>Todos os Usuários</span>
+      </a>
+      <a href="/revendedores.html" class="nav-item reseller-manage-only" data-page="revendedores">
+        <span class="nav-icon">🏪</span><span>Revendedores</span>
+      </a>
+      <a href="/dispositivos.html" class="nav-item" data-page="dispositivos">
+        <span class="nav-icon">📵</span><span>Dispositivos</span>
+      </a>
+      <a href="/ia.html" class="nav-item" data-page="ia">
+        <span class="nav-icon">✨</span><span>IA</span>
+      </a>
+      <a href="/whatsapp.html" class="nav-item" data-page="whatsapp">
+        <span class="nav-icon nav-icon-img"><img src="/img/icon-whatsapp.png" alt="Bot WhatsApp"></span><span>Bot WhatsApp</span>
+      </a>
+      <a href="/xray.html" class="nav-item admin-only" data-page="xray">
+        <span class="nav-icon nav-icon-img"><img src="/img/icon-xray.png" alt="Xray"></span><span>Xray</span>
+      </a>
+      <a href="/servidores.html" class="nav-item admin-only" data-page="servidores">
+        <span class="nav-icon">🖧</span><span>Servidores</span>
+      </a>
+      <a href="/diagnostico.html" class="nav-item" data-page="diagnostico">
+        <span class="nav-icon">🛠️</span><span>Manutenção</span>
+      </a>
+      <a href="/campanhas.html" class="nav-item" data-page="campanhas">
+        <span class="nav-icon">📣</span><span>Campanhas</span>
+      </a>
+      <a href="/app.html" class="nav-item" data-page="app">
+        <span class="nav-icon">📱</span><span>Aplicativo</span>
+      </a>
+      <a href="/backup.html" class="nav-item admin-only" data-page="backup">
+        <span class="nav-icon">💾</span><span>Backup</span>
+      </a>
+      <a href="/bot.html" class="nav-item admin-only" data-page="bot">
+        <span class="nav-icon">🤖</span><span>Bot Telegram</span>
+      </a>
+      <a href="/logs.html" class="nav-item admin-only" data-page="logs">
+        <span class="nav-icon">📋</span><span>Logs</span>
+      </a>
+      <a href="#" class="nav-item admin-only" data-page="terminal" onclick="openTerminal(); return false;">
+        <span class="nav-icon">🖥️</span><span>Terminal</span>
+      </a>
+      <!-- Item 4: menu novo, exclusivo do admin (não é recurso por revendedor). -->
+      <a href="/material.html" class="nav-item admin-only" data-page="material">
+        <span class="nav-icon">🗃️</span><span>Material</span>
+      </a>
+      <a href="/configuracoes.html" class="nav-item admin-only" data-page="config">
+        <span class="nav-icon">⚙️</span><span>Configurações</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <span class="user-avatar">👑</span>
+        <div>
+          <div class="user-name" id="sidebar-username">–</div>
+          <div class="user-role" id="sidebar-role">–</div>
+        </div>
+      </div>
+      <button class="btn-theme-toggle" id="btn-theme-toggle" title="Alternar tema" onclick="toggleTheme()">☀️</button>
+      <button class="btn-logout" id="btn-logout" title="Sair">⏻</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="burger" id="burger">☰</button>
+        <h1 class="page-title">WebSocket Manager</h1>
+      </div>
+    </header>
+
+    <div class="content">
+      <p class="text-sm text-muted" style="margin:0 0 16px">
+        7 sistemas de conexão disponíveis (5 modos + Netsimon Multiplex + BHTTPD novo), todos com porta livre pra escolher e reinício automático
+        (systemd, <span class="text-mono">Restart=always</span>) — cada um pode rodar sozinho ou junto
+        com os outros, em portas diferentes.
+      </p>
+
+      <div class="cards-grid" style="grid-template-columns:repeat(2,1fr)">
+        <div class="card-stat">
+          <div class="card-stat-icon" style="--c:#a855f7">🌐</div>
+          <div class="card-stat-info">
+            <div class="card-stat-val" id="ws-port80-val">–</div>
+            <div class="card-stat-label" id="ws-port80-label">Porta 80 (WS PROXY)</div>
+            <div class="text-muted" id="ws-port80-service" style="font-size:11px; margin-top:2px">–</div>
+          </div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-icon" style="--c:#a855f7">🔒</div>
+          <div class="card-stat-info">
+            <div class="card-stat-val" id="ws-port8443-val">–</div>
+            <div class="card-stat-label" id="ws-port8443-label">Porta 8443 (WSS TLS)</div>
+            <div class="text-muted" id="ws-port8443-service" style="font-size:11px; margin-top:2px">–</div>
+          </div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-icon" style="--c:#a855f7">🔐</div>
+          <div class="card-stat-info">
+            <div class="card-stat-val" id="ws-port8888-val">–</div>
+            <div class="card-stat-label" id="ws-port8888-label">Porta 8888 (WSS SSH)</div>
+            <div class="text-muted" id="ws-port8888-service" style="font-size:11px; margin-top:2px">–</div>
+          </div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-icon" style="--c:#22c55e">🛡️</div>
+          <div class="card-stat-info">
+            <div class="card-stat-val" id="ws-stunnel-val">–</div>
+            <div class="card-stat-label" id="ws-stunnel-label">STUNNEL SSL</div>
+            <div class="text-muted" id="ws-stunnel-service" style="font-size:11px; margin-top:2px">–</div>
+          </div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-icon" style="--c:#f97316">📡</div>
+          <div class="card-stat-info">
+            <div class="card-stat-val" id="ws-bhttp-val">–</div>
+            <div class="card-stat-label">BHTTP (antigo)</div>
+            <div class="text-muted" id="ws-bhttp-service" style="font-size:11px; margin-top:2px">–</div>
+          </div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-icon" style="--c:#06b6d4">🆕</div>
+          <div class="card-stat-info">
+            <div class="card-stat-val" id="ws-bhttpd-val">–</div>
+            <div class="card-stat-label">BHTTPD (novo, Go)</div>
+            <div class="text-muted" id="ws-bhttpd-service" style="font-size:11px; margin-top:2px">–</div>
+          </div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-icon" style="--c:#ec4899">🔀</div>
+          <div class="card-stat-info">
+            <div class="card-stat-val" id="ws-mux-val">–</div>
+            <div class="card-stat-label">NETSIMON MULTIPLEX</div>
+            <div class="text-muted" id="ws-mux-service" style="font-size:11px; margin-top:2px">–</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="card-panel-header"><span>🔌 1. WS PROXY (proxy.py, sem TLS)</span></div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:10px;">
+          <div class="text-sm text-muted" style="margin-bottom:4px">
+            Disfarça o tráfego SSH como uma conexão web comum (handshake HTTP), sem criptografia própria —
+            mais leve, mas visível em texto claro pra quem inspecionar o tráfego. Padrão automático na
+            instalação/reinício do servidor: porta 80. Escolha outra porta abaixo pra trocar quando quiser —
+            se a porta escolhida já tiver algum dos outros 3 modos ativo nela, ele é parado automaticamente
+            pra liberar o lugar.
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+            <label class="text-sm text-muted" for="ws-proxy-port">Porta:</label>
+            <input type="number" id="ws-proxy-port" style="width:90px" min="1" max="65535" value="80">
+            <button class="btn btn-primary btn-sm" onclick="wsAction('start')">▶️ Iniciar</button>
+            <button class="btn btn-danger btn-sm" onclick="wsAction('stop')">⏹ Parar</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="wsRestartAll()">↺ Reiniciar os 4 modos</button>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="card-panel-header"><span>🔒 2. WSS TLS (TLS real)</span></div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:10px;">
+          <div class="text-sm text-muted" style="margin-bottom:4px">
+            Handshake WebSocket (RFC6455) de verdade, com TLS real por cima (certificado gerado na
+            instalação) — o tráfego fica ilegível pra quem inspecionar a rede. Padrão automático na
+            instalação/reinício do servidor: porta 8443.
+          </div>
+          <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end">
+            <div>
+              <label class="text-sm text-muted" for="wss-port" style="display:block; margin-bottom:4px">Porta:</label>
+              <input type="number" id="wss-port" style="width:100px" min="1" max="65535" value="8443">
+            </div>
+            <div>
+              <label class="text-sm text-muted" for="wss-dest" style="display:block; margin-bottom:4px">Destino (porta):</label>
+              <input type="number" id="wss-dest" style="width:100px" min="1" max="65535" value="22">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="wssAction('start')">▶️ Iniciar</button>
+            <button class="btn btn-danger btn-sm" onclick="wssAction('stop')">⏹ Parar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="card-panel-header"><span>🔐 3. WSS SSH (sem TLS)</span></div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:10px;">
+          <div class="text-sm text-muted" style="margin-bottom:4px">
+            Camuflagem "HTTP/1.1 101 SECURITY" confirmada por captura de rede real — sem TLS por cima.
+            Padrão automático na instalação/reinício do servidor: porta 8888. Porta e destino (pra onde
+            o tráfego é entregue depois de descamuflado) são livres pra trocar abaixo.
+          </div>
+          <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end">
+            <div>
+              <label class="text-sm text-muted" for="wsssec-port" style="display:block; margin-bottom:4px">Porta:</label>
+              <input type="number" id="wsssec-port" style="width:100px" min="1" max="65535" value="8888">
+            </div>
+            <div>
+              <label class="text-sm text-muted" for="wsssec-dest" style="display:block; margin-bottom:4px">Destino (porta):</label>
+              <input type="number" id="wsssec-dest" style="width:100px" min="1" max="65535" value="22">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="wsssecAction('start')">▶️ Iniciar</button>
+            <button class="btn btn-danger btn-sm" onclick="wsssecAction('stop')">⏹ Parar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="card-panel-header"><span>🛡️ 4. STUNNEL SSL (SSH sobre TLS "cru")</span></div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:10px;">
+          <div class="text-sm text-muted" style="margin-bottom:4px">
+            Encapsula o SSH direto num túnel TLS separado (sem a camuflagem HTTP dos modos WSS TLS/WSS SSH acima)
+            — útil quando o cliente só precisa de uma porta puramente TLS. Padrão automático na instalação:
+            porta 2053 → 127.0.0.1:22.
+          </div>
+          <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end">
+            <div>
+              <label class="text-sm text-muted" for="stunnel-port" style="display:block; margin-bottom:4px">Porta de entrada:</label>
+              <input type="number" id="stunnel-port" style="width:110px" min="1" max="65535" value="2053">
+            </div>
+            <div>
+              <label class="text-sm text-muted" for="stunnel-dest" style="display:block; margin-bottom:4px">Porta de direcionamento:</label>
+              <input type="number" id="stunnel-dest" style="width:110px" min="1" max="65535" value="22">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="stunnelAction('start')">▶️ Iniciar / Aplicar</button>
+            <button class="btn btn-danger btn-sm" onclick="stunnelAction('stop')">⏹ Parar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="card-panel-header"><span>📡 5. NETSIMON-BHTTP</span></div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:10px;">
+          <div class="text-sm text-muted" style="margin-bottom:4px">
+            Servidor BHTTP embutido no painel — o binário já vem dentro do próprio projeto, nada é baixado
+            de repositório externo na instalação nem na ativação. Fica <strong>instalado mas desligado</strong>
+            por padrão; ative quando quiser pelas portas abaixo. Ativar aqui libera automaticamente as
+            portas escolhidas dos outros modos (WS Proxy / WSS / WSS SSH / Xray) que estiverem ocupando-as.
+          </div>
+          <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end">
+            <div>
+              <label class="text-sm text-muted" for="bhttp-http-port" style="display:block; margin-bottom:4px">Porta HTTP:</label>
+              <input type="number" id="bhttp-http-port" style="width:110px" min="1" max="65535" value="80">
+            </div>
+            <div>
+              <label class="text-sm text-muted" for="bhttp-https-port" style="display:block; margin-bottom:4px">Porta HTTPS:</label>
+              <input type="number" id="bhttp-https-port" style="width:110px" min="1" max="65535" value="443">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="bhttpAction('start')">▶️ Ativar</button>
+            <button class="btn btn-danger btn-sm" onclick="bhttpAction('stop')">⏹ Desativar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="card-panel-header"><span>🆕 6. NETSIMON-BHTTPD (novo BHTTP, protocolo BHP1 / download modo 2)</span></div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:10px;">
+          <div class="text-sm text-muted" style="margin-bottom:4px">
+            Servidor BHTTP novo (código próprio em Go), separado do BHTTP antigo — para testar sem risco:
+            ative, teste o app e desative se der problema. Fica <strong>instalado mas desligado</strong>.
+            Ativar libera as portas escolhidas (para e desabilita quem estiver nelas, inclusive o Multiplex) e só
+            aparece como ATIVO se a porta realmente abriu. O modo <em>debug</em> registra cada requisição do app
+            (modo/seq/tamanho) para diagnosticar "conectou mas não trafega dados".
+          </div>
+          <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end">
+            <div>
+              <label class="text-sm text-muted" for="bhttpd-http-port" style="display:block; margin-bottom:4px">Porta HTTP:</label>
+              <input type="number" id="bhttpd-http-port" style="width:110px" min="0" max="65535" value="80">
+            </div>
+            <div>
+              <label class="text-sm text-muted" for="bhttpd-https-port" style="display:block; margin-bottom:4px">Porta HTTPS (0 = desligada):</label>
+              <input type="number" id="bhttpd-https-port" style="width:110px" min="0" max="65535" value="443">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="bhttpdAction('start')">▶️ Ativar</button>
+            <button class="btn btn-danger btn-sm" onclick="bhttpdAction('stop')">⏹ Desativar</button>
+            <button class="btn btn-ghost btn-sm" id="bhttpd-debug-btn" onclick="bhttpdToggleDebug()">🐞 Debug: –</button>
+            <button class="btn btn-ghost btn-sm" onclick="showLog('/bhttpd/log','bhttpd-log')">📜 Ver log</button>
+          </div>
+          <pre id="bhttpd-log" class="text-mono text-sm" style="display:none; max-height:260px; overflow:auto; margin:0"></pre>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="card-panel-header"><span>🔀 7. NETSIMON MULTIPLEX (porta única 80/443 por conteúdo)</span></div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:10px;">
+          <div class="text-sm text-muted" style="margin-bottom:4px">
+            Uma só porta pública decide o protocolo pelo <strong>conteúdo</strong> da conexão (SSH, TLS/SNI,
+            WebSocket, BHTTP, Stunnel) e entrega ao serviço certo, que passa a rodar numa porta interna (127.0.0.1).
+            Xray, WSS TLS e Stunnel só entram no roteamento se já estavam ativos antes de ativar o Multiplex, ou se
+            forem escolhidos como destino TLS padrão / mapeados por SNI abaixo.
+            <strong>Ativar</strong> = guarda o que estava ligado, para e desabilita tudo isso, assume as portas
+            (mata o que ainda estiver nelas, se for processo do painel) e sobe os backends.
+            <strong>Desativar</strong> = volta ao padrão (um serviço por porta) e religa o que estava antes.
+            Ativar qualquer serviço individual numa porta do Multiplex desliga o Multiplex.
+          </div>
+          <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end">
+            <div>
+              <label class="text-sm text-muted" for="mux-http-port" style="display:block; margin-bottom:4px">Porta HTTP:</label>
+              <input type="number" id="mux-http-port" style="width:100px" min="1" max="65535" value="80">
+            </div>
+            <div>
+              <label class="text-sm text-muted" for="mux-https-port" style="display:block; margin-bottom:4px">Porta HTTPS:</label>
+              <input type="number" id="mux-https-port" style="width:100px" min="1" max="65535" value="443">
+            </div>
+            <div>
+              <label class="text-sm text-muted" for="mux-tls" style="display:block; margin-bottom:4px">TLS padrão:</label>
+              <select id="mux-tls">
+                <option value="auto">automático</option>
+                <option value="xray">Xray</option>
+                <option value="wss">WSS TLS</option>
+                <option value="bhttpd">BHTTPD (TLS)</option>
+                <option value="stunnel">Stunnel</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm text-muted" for="mux-bhttp" style="display:block; margin-bottom:4px">BHTTP interno:</label>
+              <select id="mux-bhttp">
+                <option value="bhttpd">BHTTPD (novo)</option>
+                <option value="bhttp">BHTTP (antigo)</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm text-muted" for="mux-sni" style="display:block; margin-bottom:4px">Mapa SNI → destino (opcional, ex.: <span class="text-mono">meu.host=xray,outro.host=wss</span>):</label>
+            <input type="text" id="mux-sni" style="width:100%; max-width:520px" placeholder="host=xray,host2=wss,host3=bhttpd_tls,host4=stunnel">
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="muxAction('start')">▶️ Ativar Multiplex</button>
+            <button class="btn btn-danger btn-sm" onclick="muxAction('stop')">⏹ Desativar (religa o de antes)</button>
+            <button class="btn btn-ghost btn-sm" onclick="muxAction('stop-norestore')">⏹ Desativar sem religar</button>
+            <button class="btn btn-ghost btn-sm" onclick="showLog('/mux/log','mux-log')">📜 Ver log</button>
+          </div>
+          <div id="mux-detail" class="text-sm text-muted">–</div>
+          <pre id="mux-log" class="text-mono text-sm" style="display:none; max-height:260px; overflow:auto; margin:0"></pre>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="card-panel-header"><span>📊 Relatório de Portas</span></div>
+        <div style="padding:18px">
+          <button class="btn btn-ghost btn-sm" onclick="loadPortsReport()">↻ Atualizar Relatório</button>
+          <div id="ports-report" class="text-sm text-muted" style="margin-top:12px">–</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/js/painel.js?v=53"></script>
+<script>
+// Item: descrição de qual serviço está de fato ativo em cada porta —
+// antes só mostrava "Ativa/Inativa" sem dizer qual dos 4 modos assumiu.
+const WS_SERVICE_LABEL = {
+  proxy:   "🔌 WS PROXY ativo",
+  wss:     "🔒 WSS TLS ativo",
+  wsssec:  "🔐 WSS SSH ativo",
+  stunnel: "🛡️ STUNNEL SSL ativo",
+  xray:    "🛰️ XRAY ativo",
+  bhttp:   "📡 BHTTP (antigo) ativo",
+  bhttpd:  "🆕 BHTTPD (novo) ativo",
+  mux:     "🔀 MULTIPLEX assumiu esta porta",
+  other:   "⚠️ Outro processo nesta porta",
+};
+
+async function loadWsStatus() {
+  const data = await api("/websocket/status");
+  if (!data) return;
+  // Item: BUG CORRIGIDO — cada card só pode acender "Ativa" quando o
+  // DONO daquele card é quem está de fato ocupando a porta, não mais só
+  // por "tem algo escutando ali". Antes comparava data.port80/port8443/
+  // port8888/listen_stunnel direto (true pra QUALQUER serviço na porta,
+  // Multiplex incluso) — por isso o card do WS Proxy acendia sozinho
+  // junto com o Multiplex, e podia aparecer "Ativa" numa porta onde quem
+  // está rodando é outro protocolo. A exceção combinada (BHTTP/BHTTPD
+  // podendo acender junto do Multiplex) já não passa por aqui — eles têm
+  // status próprio em loadBhttpStatus()/loadBhttpdStatus() mais abaixo.
+  const proxyOwns   = data.service80        === "proxy";
+  const wssOwns     = data.service8443      === "wss";
+  const wsssecOwns  = data.service8888      === "wsssec";
+  const stunnelOwns = data.service_stunnel  === "stunnel";
+
+  document.getElementById("ws-port80-val").innerHTML = proxyOwns
+    ? '<span class="badge badge-success">Ativa</span>' : '<span class="badge badge-danger">Inativa</span>';
+  document.getElementById("ws-port8443-val").innerHTML = wssOwns
+    ? '<span class="badge badge-success">Ativa</span>' : '<span class="badge badge-danger">Inativa</span>';
+  document.getElementById("ws-port8888-val").innerHTML = wsssecOwns
+    ? '<span class="badge badge-success">Ativa</span>' : '<span class="badge badge-danger">Inativa</span>';
+  document.getElementById("ws-stunnel-val").innerHTML = stunnelOwns
+    ? '<span class="badge badge-success">Ativa</span>' : '<span class="badge badge-danger">Inativa</span>';
+  document.getElementById("ws-stunnel-label").textContent = `STUNNEL SSL (porta ${data.port_stunnel})`;
+  // Item: label mostra a porta REAL em uso por CADA protocolo (pode ter
+  // sido trocada pela tela, inclusive pro WS Proxy agora -- ver
+  // port_proxy, que o backend já resolve via _active_template_port()
+  // igual ao WSS TLS/WSS SSH logo abaixo), não mais um número fixo.
+  document.getElementById("ws-port80-label").textContent = `Porta ${data.port_proxy} (WS PROXY)`;
+  document.getElementById("ws-port8443-label").textContent = `Porta ${data.port_wss} (WSS TLS)`;
+  document.getElementById("ws-port8888-label").textContent = `Porta ${data.port_wsssec} (WSS SSH)`;
+  // Só atualiza o valor dos campos de porta se o protocolo estiver
+  // ativo -- assim não sobrescreve o que o admin acabou de digitar
+  // pra iniciar numa porta nova ainda parada.
+  if (proxyOwns) document.getElementById("ws-proxy-port").value = data.port_proxy;
+  if (wssOwns) document.getElementById("wss-port").value = data.port_wss;
+  if (wsssecOwns) document.getElementById("wsssec-port").value = data.port_wsssec;
+
+  document.getElementById("ws-port80-service").textContent = data.port80
+    ? (WS_SERVICE_LABEL[data.service80] || "Serviço não identificado")
+    : "Nenhum serviço nesta porta";
+  document.getElementById("ws-port8443-service").textContent = data.port8443
+    ? (WS_SERVICE_LABEL[data.service8443] || "Serviço não identificado")
+    : "Nenhum serviço nesta porta";
+  document.getElementById("ws-port8888-service").textContent = data.port8888
+    ? (WS_SERVICE_LABEL[data.service8888] || "Serviço não identificado")
+    : "Nenhum serviço nesta porta";
+  document.getElementById("ws-stunnel-service").textContent = data.listen_stunnel
+    ? (WS_SERVICE_LABEL[data.service_stunnel] || "Serviço não identificado")
+    : "Nenhum serviço nesta porta";
+}
+
+async function wsAction(action) {
+  // Item: porta livre pro WS PROXY -- lê do campo
+  // "Porta" do card, permitindo trocar pra qualquer outra.
+  const port = parseInt(document.getElementById("ws-proxy-port").value, 10) || 80;
+  const r = await api(`/websocket/${action}`, "POST", { port });
+  if (!r) return;
+  toast(`WS PROXY — porta ${port}: ${action === "start" ? "iniciada" : "encerrada"}`);
+  refreshAfterAction();
+}
+
+async function wsRestartAll() {
+  const r = await api("/websocket/restart-all", "POST");
+  if (!r) return;
+  toast("WS PROXY, WSS TLS, WSS SSH e STUNNEL SSL reiniciados");
+  refreshAfterAction();
+}
+
+async function wssAction(action) {
+  const port = parseInt(document.getElementById("wss-port").value, 10) || 8443;
+  const destPort = parseInt(document.getElementById("wss-dest").value, 10) || 22;
+  const body = action === "start" ? { port, dest: `127.0.0.1:${destPort}` } : { port };
+  const r = await api(`/wss/${action}`, "POST", body);
+  if (!r) return;
+  toast(`WSS TLS — porta ${port}: ${action === "start" ? "iniciada" : "encerrada"}`);
+  refreshAfterAction();
+}
+
+async function wsssecAction(action) {
+  const port = parseInt(document.getElementById("wsssec-port").value, 10) || 8888;
+  const destPort = parseInt(document.getElementById("wsssec-dest").value, 10) || 22;
+  const body = action === "start" ? { port, dest: `127.0.0.1:${destPort}` } : { port };
+  const r = await api(`/wsssec/${action}`, "POST", body);
+  if (!r) return;
+  toast(`WSS SSH — porta ${port}: ${action === "start" ? "iniciada" : "encerrada"}`);
+  refreshAfterAction();
+}
+
+async function stunnelAction(action) {
+  if (action === "stop") {
+    const r = await api("/stunnel/stop", "POST");
+    if (!r) return;
+    toast("STUNNEL SSL encerrado");
+    refreshAfterAction();
+    return;
+  }
+  const port = parseInt(document.getElementById("stunnel-port").value, 10) || 2053;
+  const destPort = parseInt(document.getElementById("stunnel-dest").value, 10) || 22;
+  const r = await api("/stunnel/start", "POST", { port, dest: `127.0.0.1:${destPort}` });
+  if (!r) return;
+  toast(`STUNNEL SSL — porta ${port} → 127.0.0.1:${destPort}: iniciado`);
+  refreshAfterAction();
+}
+
+async function loadBhttpStatus() {
+  const data = await api("/bhttp/status");
+  if (!data) return;
+  if (!data.installed) {
+    document.getElementById("ws-bhttp-val").innerHTML = '<span class="badge badge-danger">Não instalado</span>';
+    document.getElementById("ws-bhttp-service").textContent = "Reinstale o painel";
+    return;
+  }
+  document.getElementById("ws-bhttp-val").innerHTML = data.running
+    ? '<span class="badge badge-success">Ativa</span>' : '<span class="badge badge-danger">Inativa</span>';
+  document.getElementById("ws-bhttp-service").textContent = data.running
+    ? `📡 BHTTP ativo (HTTP ${data.http_port} / HTTPS ${data.https_port})${data.via_mux ? " — via Multiplex" : ""}`
+    : "Instalado, desativado";
+  if (!document.getElementById("bhttp-http-port").matches(":focus")) {
+    document.getElementById("bhttp-http-port").value = data.http_port;
+  }
+  if (!document.getElementById("bhttp-https-port").matches(":focus")) {
+    document.getElementById("bhttp-https-port").value = data.https_port;
+  }
+}
+
+async function bhttpAction(action) {
+  if (action === "stop") {
+    const r = await api("/bhttp/stop", "POST");
+    if (!r) return;
+    toast("Netsimon-BHTTP desativado");
+    refreshAfterAction();
+    return;
+  }
+  const http_port = parseInt(document.getElementById("bhttp-http-port").value, 10) || 80;
+  const https_port = parseInt(document.getElementById("bhttp-https-port").value, 10) || 443;
+  const r = await api("/bhttp/start", "POST", { http_port, https_port });
+  refreshAfterAction();
+  if (!r) return;
+  toast(`Netsimon-BHTTP ativado — HTTP ${http_port} / HTTPS ${https_port}`);
+}
+
+// ── v47: BHTTPD (novo) ──────────────────────────────────────────
+async function loadBhttpdStatus() {
+  const d = await api("/bhttpd/status");
+  if (!d) return;
+  const val = document.getElementById("ws-bhttpd-val"), sv = document.getElementById("ws-bhttpd-service");
+  if (!d.installed) {
+    val.innerHTML = '<span class="badge badge-danger">Não instalado</span>';
+    sv.textContent = "Reinstale o painel"; return;
+  }
+  val.innerHTML = d.running ? '<span class="badge badge-success">Ativa</span>' : '<span class="badge badge-danger">Inativa</span>';
+  // v48: quando ativo via Multiplex, "http_port/https_port" já vêm do
+  // backend trocados pras portas PÚBLICAS do mux (não as standalone,
+  // que não têm nada escutando nelas enquanto o mux está no comando) —
+  // só falta deixar claro que é via Multiplex, pra não parecer que o
+  // BHTTPD está em pé sozinho nessas portas.
+  sv.textContent = d.running
+    ? `🆕 BHTTPD ${d.version ? d.version.replace("netsimon-bhttpd ","v") : ""} (HTTP ${d.http_port} / HTTPS ${d.https_port || "off"})${d.via_mux ? " — via Multiplex" : ""}`
+    : "Instalado, desativado";
+  const hp = document.getElementById("bhttpd-http-port"), sp = document.getElementById("bhttpd-https-port");
+  if (!hp.matches(":focus")) hp.value = d.http_port;
+  if (!sp.matches(":focus")) sp.value = d.https_port;
+  document.getElementById("bhttpd-debug-btn").textContent = `🐞 Debug: ${d.debug ? "ON" : "OFF"}`;
+  document.getElementById("bhttpd-debug-btn").dataset.on = d.debug ? "1" : "0";
+}
+
+async function bhttpdAction(action) {
+  if (action === "stop") {
+    const r = await api("/bhttpd/stop", "POST");
+    if (!r) return;
+    toast("Netsimon-BHTTPD desativado");
+    refreshAfterAction(); return;
+  }
+  const http_port = parseInt(document.getElementById("bhttpd-http-port").value, 10);
+  const https_port = parseInt(document.getElementById("bhttpd-https-port").value, 10);
+  const r = await api("/bhttpd/start", "POST", {
+    http_port: isNaN(http_port) ? 80 : http_port, https_port: isNaN(https_port) ? 443 : https_port });
+  refreshAfterAction();
+  if (!r) return;
+  toast("Netsimon-BHTTPD ativado");
+}
+
+async function bhttpdToggleDebug() {
+  const on = document.getElementById("bhttpd-debug-btn").dataset.on !== "1";
+  const r = await api("/bhttpd/debug", "POST", { on });
+  if (!r) return;
+  toast(`BHTTPD debug ${on ? "ligado" : "desligado"}`);
+  setTimeout(loadBhttpdStatus, 1500);
+}
+
+async function showLog(path, elId) {
+  const d = await api(path);
+  const el = document.getElementById(elId);
+  if (!d) return;
+  el.style.display = "block";
+  el.textContent = (d.lines || []).join("\n") || "(log vazio)";
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── v47: MULTIPLEX ──────────────────────────────────────────────
+async function loadMuxStatus() {
+  const d = await api("/mux/status");
+  if (!d) return;
+  const val = document.getElementById("ws-mux-val"), sv = document.getElementById("ws-mux-service");
+  if (!d.installed) {
+    val.innerHTML = '<span class="badge badge-danger">Não instalado</span>';
+    sv.textContent = "Reinstale o painel"; return;
+  }
+  val.innerHTML = d.running ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">Inativo</span>';
+  sv.textContent = d.running ? `🔀 Portas ${d.http_port} / ${d.https_port}` : "Instalado, desativado";
+  const hp = document.getElementById("mux-http-port"), sp = document.getElementById("mux-https-port");
+  const sni = document.getElementById("mux-sni");
+  if (!hp.matches(":focus")) hp.value = d.http_port;
+  if (!sp.matches(":focus")) sp.value = d.https_port;
+  if (!sni.matches(":focus")) sni.value = d.sni_map || "";
+  document.getElementById("mux-tls").value = d.tls_default || "auto";
+  document.getElementById("mux-bhttp").value = d.bhttp_impl || "bhttpd";
+  let t = "";
+  if (d.running) {
+    t = `Backends internos: <span class="text-mono">${(d.backends || []).join(", ") || "–"}</span> · TLS padrão efetivo: <span class="text-mono">${d.tls_default_effective || "–"}</span>`;
+    if ((d.will_restore || []).length) t += `<br>Ao desativar serão religados: <span class="text-mono">${d.will_restore.join(", ")}</span>`;
+  }
+  document.getElementById("mux-detail").innerHTML = t || "Multiplex desativado — painel no modo padrão (um serviço por porta).";
+}
+
+async function muxRaw(path, body) {
+  // usa fetch direto para poder tratar 409 (porta presa por processo desconhecido) com "Forçar"
+  const r = await fetch(API_BASE + path, { method: "POST",
+    headers: { "X-Token": getToken(), "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+  if (r.status === 401) { doLogout(); return null; }
+  return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) };
+}
+
+async function muxAction(action) {
+  if (action !== "start") {
+    const restore = action === "stop";
+    if (!restore && !confirm("Desativar o Multiplex SEM religar os serviços que estavam ativos antes?")) return;
+    const r = await muxRaw("/mux/stop", { restore });
+    if (r && r.ok) toast(restore ? "Multiplex desativado — serviços de antes religados" : "Multiplex desativado");
+    else toast((r && r.data.error) || "Falha ao desativar", true);
+    refreshAfterAction(); return;
+  }
+  if (!confirm("Ativar o Multiplex vai PARAR e DESABILITAR os serviços que estão rodando e assumir as portas. Continuar?")) return;
+  const body = {
+    http_port: parseInt(document.getElementById("mux-http-port").value, 10) || 80,
+    https_port: parseInt(document.getElementById("mux-https-port").value, 10) || 443,
+    tls_default: document.getElementById("mux-tls").value,
+    bhttp_impl: document.getElementById("mux-bhttp").value,
+    sni_map: document.getElementById("mux-sni").value.trim(),
+  };
+  toast("Ativando o Multiplex… (pode levar alguns segundos)");
+  let r = await muxRaw("/mux/start", body);
+  if (r && !r.ok && r.data.blocked) {
+    if (confirm(r.data.error + "\n\nForçar mesmo assim (encerra esse processo)?")) {
+      r = await muxRaw("/mux/start", { ...body, force: true });
+    }
+  }
+  if (r && r.ok) toast("Netsimon Multiplex ATIVO");
+  else toast((r && r.data.error) || "Falha ao ativar o Multiplex", true);
+  refreshAfterAction();
+}
+
+// Atualiza TUDO (cards, BHTTP, BHTTPD, Multiplex e lista de portas): ativar um
+// serviço derruba outro na mesma porta, então atualizar só o card clicado
+// deixava o vizinho mentindo até o próximo ciclo de 10 s.
+function refreshAll() {
+  loadWsStatus(); loadBhttpStatus(); loadBhttpdStatus(); loadMuxStatus(); loadPortsReport();
+}
+function refreshAfterAction() {
+  refreshAll();
+  setTimeout(refreshAll, 2000);
+  setTimeout(refreshAll, 5000);
+}
+
+async function loadPortsReport() {
+  const dash = await api("/dashboard");
+  if (!dash) return;
+  const ports = dash.ports || [];
+  document.getElementById("ports-report").innerHTML = ports.length
+    ? `Portas em LISTEN no servidor: <span class="text-mono">${ports.join(", ")}</span>`
+    : "Nenhuma porta em LISTEN detectada.";
+}
+
+initPage();
+refreshAll();
+setInterval(refreshAll, 8000);
+</script>
+</body>
+</html>
